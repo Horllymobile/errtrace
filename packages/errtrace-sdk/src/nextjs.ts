@@ -3,27 +3,32 @@ import ErrTrace from './client'
 /**
  * Next.js integration for ErrTrace
  */
-export function withErrTrace(handler: any) {
+
+export function withErrTrace(
+  handler: any,
+  options?: { tags?: string[]; metadata?: Record<string, any> }
+) {
+  const errtrace = new ErrTrace({
+    environment: process.env.NODE_ENV,
+    release: process.env.NEXT_PUBLIC_APP_VERSION,
+  });
+
   return async (req: any, res: any) => {
     try {
-      return await handler(req, res)
+      return await handler(req, res);
     } catch (error) {
-      const errtrace = new ErrTrace({
-        environment: process.env.NODE_ENV,
-        release: process.env.NEXT_PUBLIC_APP_VERSION,
-      })
-      
       await errtrace.captureError(error as Error, {
         metadata: {
           url: req.url,
           method: req.method,
-          type: 'nextjs-api'
-        }
-      })
-      
-      throw error
+          type: 'nextjs-api',
+          ...options?.metadata,
+        },
+        tags: options?.tags,
+      });
+      throw error;
     }
-  }
+  };
 }
 
 /**
