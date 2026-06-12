@@ -198,15 +198,15 @@ export async function saveEvent(event: any) {
     .from('events')
     .insert({
       id: event.id || undefined,
-      user_id: event.user.id,
-      user_identifier: event.user.id,
-      name: event.name,
-      url: event.properties?.path || event.properties?.url || null,
+      user_id: event?.user?.id,
+      user_identifier: event?.user?.id,
+      name: event?.name,
+      url: event?.properties?.path || event?.properties?.url || null,
       metadata: {
-        ...event.properties,
-        user: event.user,
-        tags: event.tags,
-        environment: event.environment,
+        ...event?.properties,
+        user: event?.user,
+        tags: event?.tags,
+        environment: event?.environment,
       },
       created_at: event.timestamp || new Date().toISOString(),
     })
