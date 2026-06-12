@@ -63,3 +63,11 @@ export interface TrackErrTraceEvent {
   environment: string;
   release?: string;
 }
+
+export interface EventLog {
+  id?: string;
+  name: string;
+  url?: string;
+  metadata?: string | Record<string, any>;
+  created_at?: string;
+}
