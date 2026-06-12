@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['@vercel/blob'],
-
+  // outputFileTracingRoot: path.join(__dirname, '../../'),
   async headers() {
     return [
       {
@@ -17,7 +17,12 @@ const nextConfig = {
     ];
   },
 
-    // Prevent Vercel from redirecting API routes
+  env: {
+    ERRTRACE_USERNAME: process.env.ERRTRACE_USERNAME,
+    ERRTRACE_PASSWORD: process.env.ERRTRACE_PASSWORD,
+  },
+
+  // Prevent Vercel from redirecting API routes
   async redirects() {
     return [];
   },

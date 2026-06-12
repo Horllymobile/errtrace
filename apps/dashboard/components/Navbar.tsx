@@ -2,11 +2,20 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Bug, Menu, X, BookOpen, Settings } from 'lucide-react'
+import { Bug, Menu, X, BookOpen, Settings, LogOut } from 'lucide-react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const router = useRouter()
+
+    const handleLogout = async () => {
+        await fetch('/api/auth/logout', { method: 'POST' })
+        router.push('/login')
+        router.refresh()
+    }
+
 
     return (
         <nav className="sticky top-0 z-50 bg-errtrace-dark-900/95 backdrop-blur supports-[backdrop-filter]:bg-errtrace-dark-900/80 border-b border-errtrace-dark-800">
@@ -52,6 +61,14 @@ export default function Navbar() {
                             </a>
                             <span>GitHub</span>
                         </a>
+
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center space-x-1 px-3 py-2 text-errtrace-dark-300 hover:text-red-400 rounded-lg hover:bg-errtrace-dark-800 transition-all"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            <span>Logout</span>
+                        </button>
 
                         <button className="flex items-center space-x-1 px-3 py-2 text-errtrace-dark-300 hover:text-white rounded-lg hover:bg-errtrace-dark-800 transition-all">
                             <Settings className="h-4 w-4" />
@@ -103,6 +120,13 @@ export default function Navbar() {
                                 </a>
                                 <span>GitHub</span>
                             </a>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center space-x-1 px-3 py-2 text-errtrace-dark-300 hover:text-red-400 rounded-lg hover:bg-errtrace-dark-800 transition-all"
+                            >
+                                <LogOut className="h-4 w-4" />
+                                <span>Logout</span>
+                            </button>
                             <button className="flex items-center space-x-2 px-3 py-2 text-errtrace-dark-300 hover:text-white rounded-lg hover:bg-errtrace-dark-800 transition-all w-full">
                                 <Settings className="h-4 w-4" />
                                 <span>Settings</span>
