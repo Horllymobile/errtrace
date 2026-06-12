@@ -1,15 +1,19 @@
-import { put, list, del, head } from '@vercel/blob';
+import { put, list } from '@vercel/blob';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
 import { ErrorLog } from './types';
 
 // ------------------------------------------------------------------
-// Auto-detect: use Vercel Blob (if env vars present) or local JSON
+// Determine storage backend
 // ------------------------------------------------------------------
-const USE_BLOB = !!(process.env.BLOB_READ_WRITE_TOKEN);
+const IS_VERCEL = process.env.VERCEL === '1';
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 
-// Local JSON fallback
+// Only use Blob if we have a token, OR if we're on Vercel
+const USE_BLOB = !!(BLOB_TOKEN) || IS_VERCEL;
+
+// Local JSON fallback (only used locally, not on Vercel)
 const DATA_DIR = path.join(process.cwd(), 'data');
 const ERRORS_FILE = path.join(DATA_DIR, 'errors.json');
 let localCache: ErrorLog[] = [];
@@ -25,6 +29,12 @@ if (!USE_BLOB) {
   }
   console.log('📁 Using local JSON file storage');
 } else {
+  if (!BLOB_TOKEN) {
+    throw new Error(
+      'BLOB_READ_WRITE_TOKEN is required when running on Vercel. ' +
+      'Add it in your project settings: Settings → Environment Variables'
+    );
+  }
   console.log('☁️  Using Vercel Blob storage');
 }
 
