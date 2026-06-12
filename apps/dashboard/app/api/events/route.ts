@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { put, list } from '@vercel/blob';
+import { getDateFilter } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,30 +53,41 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const name = searchParams.get('name') || undefined;
+    const dateRange = searchParams.get('dateRange') || 'all';
+
     const { blobs } = await list({ prefix: 'events.json' });
     if (blobs.length > 0) {
       const response = await fetch(blobs[0].url, {
         headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
       });
       const text = await response.text();
-      const events = JSON.parse(text);
+      let events = JSON.parse(text);
 
-      const searchParams = request.nextUrl.searchParams;
-      const limit = parseInt(searchParams.get('limit') || '50');
-      const name = searchParams.get('name');
+      // Date filter
+      const dateFilter = getDateFilter(dateRange);
+      if (dateFilter) {
+        if (dateRange === 'today' || dateRange === 'yesterday') {
+          events = events.filter((e: any) => e.timestamp?.startsWith(dateFilter));
+        } else {
+          events = events.filter((e: any) => e.timestamp && new Date(e.timestamp) >= new Date(dateFilter));
+        }
+      }
 
-      let filtered = events;
+      // Name filter
       if (name) {
-        filtered = filtered.filter((e: any) => e.name === name);
+        events = events.filter((e: any) => e.name === name);
       }
 
       // Sort newest first
-      filtered.sort((a: any, b: any) => 
+      events.sort((a: any, b: any) => 
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
 
-      const total = filtered.length;
-      const paged = filtered.slice(0, limit);
+      const total = events.length;
+      const paged = events.slice(0, limit);
 
       return NextResponse.json({ events: paged, total });
     }

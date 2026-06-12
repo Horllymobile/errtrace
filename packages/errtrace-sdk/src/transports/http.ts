@@ -47,9 +47,10 @@ export class HTTPTransport implements Transport {
   }
 
   async sendEvent(event: TrackEvent): Promise<boolean> {
-    console.log('📊 ErrTrace Event:', event.name, event.properties);
     try {
-      const response = await fetch(`${this.endpoint}/api/events`, {
+      // Remove /api/errors from the endpoint and add /api/events
+      const baseUrl = this.endpoint.replace(/\/api\/errors\/?$/, '');
+      const response = await fetch(`${baseUrl}/api/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

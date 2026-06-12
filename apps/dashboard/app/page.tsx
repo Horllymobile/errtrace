@@ -12,6 +12,7 @@ import { Activity, AlertTriangle, Bug, RefreshCw } from 'lucide-react';
 import { ErrTrace } from 'errtrace';
 import EventModal from '@/components/EventModal'
 import EventTable from '@/components/EventTable'
+import DateFilter, { DateRange } from '@/components/DateFilter'
 
 const errtrace = new ErrTrace({
   dsn: typeof window !== 'undefined' ? window.location.origin : '',
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const [selectedError, setSelectedError] = useState<ErrorLog | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<TrackErrTraceEvent | null>(null)
   const [loading, setLoading] = useState(true)
+  const [dateRange, setDateRange] = useState<DateRange>('all')
 
   const fetchErrors = useCallback(async () => {
     setLoading(true)
@@ -39,6 +41,7 @@ export default function Dashboard() {
       const params = new URLSearchParams({
         limit: pagination.limit.toString(),
         offset: pagination.offset.toString(),
+        dateRange,
         ...(filters.level && { level: filters.level }),
         ...(filters.resolved && { resolved: filters.resolved }),
         ...(filters.search && { search: filters.search })
@@ -52,12 +55,12 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }, [pagination.offset, pagination.limit, filters])
+  }, [pagination.offset, pagination.limit, filters, dateRange])
 
   const fetchEvents = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/events?limit=50`)
+      const response = await fetch(`/api/events?limit=50&dateRange=${dateRange}`)
       const data = await response.json()
       setEvents(data.events || [])
     } catch (error) {
@@ -65,7 +68,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [dateRange])
 
   useEffect(() => {
     if (activeTab === 'errors') {
@@ -115,6 +118,7 @@ export default function Dashboard() {
             <Bug className="h-4 w-4" />
             <span>Test Error</span>
           </button>
+          <DateFilter value={dateRange} onChange={setDateRange} />
           <button onClick={() => { activeTab === 'errors' ? fetchErrors() : fetchEvents(); toast.success('Refreshed'); }} className="btn bg-errtrace-primary hover:bg-errtrace-secondary text-white flex items-center space-x-2">
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
