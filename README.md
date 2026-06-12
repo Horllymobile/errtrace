@@ -1,10 +1,38 @@
 # ErrTrace
 
-Open-source error tracking for modern applications.  
-A lightweight SDK to capture errors + a self-hosted dashboard to view and manage them.
+Open-source error & event tracking for modern applications.  
+A lightweight SDK to capture errors and events + a self-hosted dashboard to view and manage them.
 
 [![npm version](https://img.shields.io/npm/v/errtrace)](https://www.npmjs.com/package/errtrace)
 [![license](https://img.shields.io/npm/l/errtrace)](LICENSE)
+
+---
+
+## ✨ Features
+
+### 📦 SDK
+
+- 🔴 **Error tracking** – Auto-capture uncaught exceptions and promise rejections
+- 📊 **Event tracking** – Track custom events, page views, and user actions
+- 👤 **User identification** – Attach user context to errors and events
+- 🍞 **Breadcrumbs** – Record steps leading to errors
+- 🏷️ **Tags & releases** – Organize errors by version and tags
+- 🎯 **Sampling** – Control error/event sampling rate
+- 🔌 **Framework integrations** – React, Next.js, Express
+- 📝 **TypeScript** – Full type support
+
+### 🖥️ Dashboard
+
+- 📊 **Real-time stats** – Error rates, event counts, unique users
+- 🔍 **Search & filter** – By level, status, date range, and text
+- 📅 **Date filters** – Today, yesterday, last 7/30/90 days, all time
+- 📋 **Error details** – Stack traces, metadata, breadcrumbs, user context
+- 📈 **Event analytics** – Top events, 24-hour timeline, user tracking
+- ✅ **Error management** – Resolve, delete, or clear all errors
+- 🗑️ **Bulk actions** – Select multiple errors/events to resolve or delete
+- 🌙 **Dark mode** – Responsive dark UI
+- ☁️ **Vercel Blob storage** – Free persistent storage on Vercel
+- 📱 **Mobile responsive** – Works on all devices
 
 ---
 
@@ -25,17 +53,20 @@ errtrace/
 ├── apps/
 │   └── dashboard/             # Next.js dashboard
 │       ├── app/
-│       │   ├── api/           # API routes
+│       │   ├── api/
+│       │   │   ├── errors/    # Error CRUD endpoints
+│       │   │   ├── events/    # Event tracking endpoints
+│       │   │   └── stats/     # Statistics endpoints
 │       │   ├── layout.tsx
 │       │   ├── page.tsx
 │       │   └── globals.css
 │       ├── components/        # UI components
-│       ├── lib/               # database & utilities
+│       ├── lib/               # Database & utilities
 │       ├── public/
 │       └── package.json
 ├── pnpm-workspace.yaml
 ├── package.json
-└── README.md                  # 👈 you are here
+└── README.md
 ```
 
 ---
@@ -67,7 +98,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Errors are stored in `apps/dashboard/data/errors.json` (auto-created).
+Errors and events are stored in `apps/dashboard/data/` (auto-created for local dev).
 
 ### Build the SDK
 
@@ -99,7 +130,7 @@ npm install errtrace
 import { ErrTrace } from 'errtrace'
 
 const errtrace = new ErrTrace({
-  dsn: 'https://your-err-trace-dashboard.com', // or '/api/errors' for local dev
+  dsn: 'https://your-errtrace-dashboard.com',
   environment: 'production',
   release: '1.0.0',
 })
@@ -113,6 +144,22 @@ try {
 
 // Capture messages
 errtrace.captureMessage('User logged in', 'info')
+
+// Track events
+errtrace.track('purchase_completed', {
+  productId: 'prod_123',
+  amount: 99.99,
+})
+
+// Track page views
+errtrace.trackPageView('/checkout', 'Checkout Page')
+
+// Identify users
+errtrace.setUser({
+  id: 'user_123',
+  email: 'john@example.com',
+  username: 'john_doe',
+})
 ```
 
 ### Configuration
@@ -131,29 +178,28 @@ errtrace.captureMessage('User logged in', 'info')
 
 ### API Reference
 
-#### `captureError(error: Error, options?: CaptureOptions): Promise<string | null>`
+#### Error & Event Tracking
 
-Send an error. Returns the error ID (UUID) or `null`.
+| Method | Description |
+|---|---|
+| `captureError(error, options?)` | Send an error. Returns error ID or `null` |
+| `captureMessage(message, level?, options?)` | Send a message with level |
+| `track(name, properties?)` | Track a custom event |
+| `trackPageView(path?, title?, properties?)` | Track a page view |
 
-#### `captureMessage(message: string, level?: LogLevel, options?: CaptureOptions): Promise<string | null>`
+#### Context Methods
 
-Send a message with a custom level (`'error'` | `'warning'` | `'info'` | `'debug'`).
-
-#### `setUser(user: User | null): void`
-
-Attach user information (`id`, `email`, etc.) to all subsequent events.
-
-#### `addBreadcrumb(breadcrumb: Omit<Breadcrumb, 'timestamp'>): void`
-
-Record a breadcrumb (a step that led to the error).
-
-#### `setTags(tags: string[]): void`
-
-#### `setRelease(release: string): void`
+| Method | Description |
+|---|---|
+| `setUser(user \| null)` | Attach user info to all subsequent events |
+| `addBreadcrumb(breadcrumb)` | Record a step leading to an error |
+| `setTags(tags)` | Set global tags |
+| `setRelease(release)` | Set release version |
+| `setEnabled(enabled)` | Enable/disable tracking |
 
 ### Framework Integrations
 
-#### React / Next.js
+#### React / Next.js Error Boundary
 
 ```tsx
 import { ErrTraceErrorBoundary, useErrTrace } from 'errtrace/react'
@@ -163,24 +209,31 @@ import { ErrTraceErrorBoundary, useErrTrace } from 'errtrace/react'
   <App />
 </ErrTraceErrorBoundary>
 
-// Or use the hook inside a component
+// Or use the hook
 function MyComponent() {
   const { captureError } = useErrTrace(errtrace)
 }
 ```
 
-#### Express
+#### Express Middleware
 
 ```ts
 import { errTraceMiddleware } from 'errtrace/express'
 app.use(errTraceMiddleware(errtrace))
 ```
 
-#### Next.js API Routes
+#### Next.js API Route Wrapper
 
 ```ts
 import { withErrTrace } from 'errtrace/nextjs'
-export default withErrTrace(async (req, res) => { … })
+
+async function handler(req: NextRequest) {
+  // Your route logic
+  return NextResponse.json({ data })
+}
+
+export const GET = withErrTrace(handler)
+export const POST = withErrTrace(handler)
 ```
 
 ### Subpath Exports
@@ -192,23 +245,32 @@ export default withErrTrace(async (req, res) => { … })
 | `errtrace/express` | Express error-handling middleware |
 | `errtrace/nextjs` | Next.js API route wrapper |
 
-> **Note:** React, Express, and Next.js are optional peer dependencies. They are only required when using the corresponding subpath.
+> **Note:** React, Express, and Next.js are optional peer dependencies.
 
 ---
 
 ## 🖥️ Dashboard
 
-A full-featured Next.js app to view, search, filter, and manage errors.
+A full-featured Next.js app to view, search, filter, and manage errors and events.
+
+### Tabs
+
+- 🔴 **Errors** – View, filter, resolve, and delete errors
+- 📊 **Events** – View tracked events, page views, and analytics
 
 ### Features
 
-- 📊 Real-time error statistics
-- 🔍 Search & filter (by level, status, text)
-- 📋 Error details (stack trace, metadata, breadcrumbs)
+- 📊 Real-time error & event statistics
+- 🔍 Search & filter (by level, status, text, date range)
+- 📅 Date filters (Today, Yesterday, Last 7/30/90 days, All time)
+- 📋 Error details (stack trace, metadata, breadcrumbs, user)
+- 📈 Event timeline (24-hour sparkline chart)
+- 🏆 Top events leaderboard
+- 👤 User context on errors and events
 - ✅ Mark errors as resolved
-- 🗑️ Delete errors
+- 🗑️ Delete individual or clear all errors/events
 - 📱 Responsive dark UI
-- 🔗 API ready to receive errors from any source
+- 🔗 REST API ready to receive data from any source
 
 ### Running Locally
 
@@ -216,33 +278,32 @@ A full-featured Next.js app to view, search, filter, and manage errors.
 pnpm dev
 ```
 
-### Environment Variables
+### Deploying to Vercel
 
-Create `apps/dashboard/.env.local`:
-
-<!-- ```env
-# Not required – by default it uses a local JSON file.
-# To use Upstash Redis (optional), uncomment and set:
-# UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
-# UPSTASH_REDIS_REST_TOKEN=your_token
-``` -->
-
-If no Redis variables are provided, the dashboard automatically falls back to a JSON file store (`data/errors.json`) inside the dashboard folder.
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Set **Root Directory** to `apps/dashboard`
+4. Add **Blob Storage** in Vercel (free)
+5. Add environment variable: `BLOB_READ_WRITE_TOKEN`
+6. Deploy!
 
 ### API Endpoints
-
-The dashboard exposes REST endpoints that can be used by any application (including the SDK):
 
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/api/errors` | Log a new error |
-| `GET` | `/api/errors` | List errors |
+| `GET` | `/api/errors` | List errors (with filters) |
 | `GET` | `/api/errors/[id]` | Get error details |
-| `PATCH` | `/api/errors/[id]` | Update an error |
+| `PATCH` | `/api/errors/[id]` | Update an error (resolve) |
 | `DELETE` | `/api/errors/[id]` | Delete an error |
-| `GET` | `/api/stats` | Dashboard statistics |
+| `DELETE` | `/api/errors/clear` | Clear all errors |
+| `POST` | `/api/events` | Track an event |
+| `GET` | `/api/events` | List events |
+| `DELETE` | `/api/events/clear` | Clear all events |
+| `GET` | `/api/stats` | Error statistics |
+| `GET` | `/api/events/stats` | Event statistics |
 
-**Example POST body:**
+**Error POST body:**
 
 ```json
 {
@@ -255,6 +316,35 @@ The dashboard exposes REST endpoints that can be used by any application (includ
   "metadata": { "key": "value" }
 }
 ```
+
+**Event POST body:**
+
+```json
+{
+  "name": "purchase_completed",
+  "properties": {
+    "productId": "prod_123",
+    "amount": 99.99
+  },
+  "user": {
+    "id": "user_123",
+    "email": "john@example.com"
+  },
+  "tags": ["checkout", "premium"],
+  "environment": "production"
+}
+```
+
+### Query Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `limit` | `number` | Results per page (default: `20`) |
+| `offset` | `number` | Pagination offset (default: `0`) |
+| `level` | `string` | Filter by level (`error`, `warning`, `info`, `debug`) |
+| `resolved` | `string` | Filter by status (`0` = unresolved, `1` = resolved) |
+| `search` | `string` | Search in message, URL, and stack trace |
+| `dateRange` | `string` | Date filter (`today`, `yesterday`, `7d`, `30d`, `90d`, `all`) |
 
 ---
 
