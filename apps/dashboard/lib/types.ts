@@ -1,15 +1,18 @@
 export interface ErrorLog {
-  id: string
-  message: string
-  stack_trace: string
-  level: 'error' | 'warning' | 'info' | 'debug'
-  environment: string
-  url: string
-  user_agent: string
-  ip_address: string
-  metadata: any
-  created_at: string
-  resolved: number
+  id: string;
+  message: string;
+  stack_trace: string;
+  level: 'error' | 'warning' | 'info' | 'debug';
+  environment: string;
+  url: string;
+  user_agent: string;
+  ip_address: string;
+  metadata: any;
+  created_at: string;
+  resolved: number;        // 0 or 1
+  project?: string;
+  release?: string;
+  tags?: string[];
 }
 
 export interface ErrorStats {
@@ -35,4 +38,12 @@ export interface ErrTraceConfig {
   environment?: string
   release?: string
   tags?: string[]
+}
+
+export interface ErrTraceStats {
+  total: number;
+  unresolved: number;
+  today: number;
+  by_level: Array<{ level: string; count: number }>;
+  recent_errors: ErrorLog[];
 }

@@ -12,7 +12,7 @@ const errtrace = initErrTrace({
 try {
   // Your code here
   throw new Error('Something went wrong!')
-} catch (error) {
+} catch (error: any) {
   errtrace.captureError(error, {
     userId: '123',
     action: 'checkout'

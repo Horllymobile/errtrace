@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ErrTraceStats } from '@/lib/types'
-import { AlertTriangle, AlertCircle, Info, Activity, TrendingUp, Clock } from 'lucide-react'
+import { AlertTriangle, AlertCircle, TrendingUp, Clock } from 'lucide-react';
 
 export default function StatsBar() {
   const [stats, setStats] = useState<ErrTraceStats | null>(null)

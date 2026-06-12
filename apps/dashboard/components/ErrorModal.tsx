@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment } from 'react'
-import { ErrTraceError } from '@/lib/types'
+import { ErrorLog } from '@/lib/types'
 import { 
   X, 
   AlertCircle, 
@@ -19,7 +19,7 @@ import {
 import { useState } from 'react'
 
 interface ErrorModalProps {
-  error: ErrTraceError
+  error: ErrorLog
   onClose: () => void
 }
 
