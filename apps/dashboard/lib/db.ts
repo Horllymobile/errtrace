@@ -2,9 +2,9 @@ import { supabaseAdmin } from './supabase';
 import { ErrorLog, TrackErrTraceEvent } from './types';
 
 // ------------------------------------------------------------------
-// Errors
+// Errors 
 // ------------------------------------------------------------------
-export async function saveError(error: ErrorLog) {
+export async function saveError(error: any) {
   const { data, error: dbError } = await supabaseAdmin
     .from('errors')
     .insert({
@@ -16,17 +16,14 @@ export async function saveError(error: ErrorLog) {
       metadata: typeof error.metadata === 'string'
         ? JSON.parse(error.metadata)
         : error.metadata || {},
-      resolved: error.resolved || 0,
+      user_identifier: error.user.id || null,   // <-- ADD
+      resolved: 0,
       created_at: error.created_at || new Date().toISOString(),
     })
     .select('id')
     .single();
 
-  if (dbError) {
-    console.error('Error saving error:', dbError);
-    throw dbError;
-  }
-
+  if (dbError) throw dbError;
   return data.id;
 }
 
@@ -196,20 +193,13 @@ export async function getErrorStats() {
 // ------------------------------------------------------------------
 // Events
 // ------------------------------------------------------------------
-export async function saveEvent(event: {
-  id?: string;
-  name: string;
-  properties?: Record<string, any>;
-  timestamp?: string;
-  environment?: string;
-  tags?: string[];
-  user?: any;
-}) {
+export async function saveEvent(event: any) {
   const { data, error: dbError } = await supabaseAdmin
     .from('events')
     .insert({
       id: event.id || undefined,
       user_id: event.user.id,
+      user_identifier: event.user.id,
       name: event.name,
       url: event.properties?.path || event.properties?.url || null,
       metadata: {

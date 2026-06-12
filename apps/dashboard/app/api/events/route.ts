@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Event name required' }, { status: 400 });
     }
 
+    // user_identifier: event.user.id,
+
     const eventId = await saveEvent({
       id: id || undefined,
       name,
@@ -23,6 +25,7 @@ export async function POST(request: NextRequest) {
       environment: environment || 'production',
       tags: tags || [],
       user: user || undefined,
+      user_id: body.user_id || null,
     });
 
     return NextResponse.json({ success: true, event_id: eventId }, { status: 201 });

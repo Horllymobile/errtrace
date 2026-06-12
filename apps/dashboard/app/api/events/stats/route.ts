@@ -51,10 +51,24 @@ export async function GET() {
       }
     });
 
+    // Unique users
+    // const { count: uniqueUsers } = await supabaseAdmin
+    //   .from('events')
+    //   .select('user_identifier', { count: 'exact', head: true })
+    //   .not('user_identifier', 'is', null)
+    //   .limit(0); // we need distinct count, not possible with supabase-js? Use rpc.
+
+    // Better: use a raw SQL query via rpc or direct query
+    const { data: uniqueUsersData } = await supabaseAdmin
+      .rpc('count_distinct_users');
+
+
+
+    const uniqueUsers = uniqueUsersData || 0;
     return NextResponse.json({
       total: total || 0,
       today: todayCount || 0,
-      uniqueUsers: 0, // Add user tracking later
+      uniqueUsers, // Add user tracking later
       topEvents,
       eventTimeline: Object.entries(hourlyEvents).map(([hour, count]) => ({
         hour,
