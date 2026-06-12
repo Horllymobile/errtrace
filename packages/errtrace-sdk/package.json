@@ -1,6 +1,6 @@
 {
   "name": "errtrace",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "ErrTrace – lightweight error tracking SDK",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

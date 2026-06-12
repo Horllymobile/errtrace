@@ -38,6 +38,26 @@ if (!USE_BLOB) {
   console.log('☁️  Using Vercel Blob storage');
 }
 
+async function safeFetchJson(url: string, init?: RequestInit) {
+  try {
+    const res = await fetch(url, init);
+    if (!res.ok) {
+      throw new Error(`Blob fetch failed with status ${res.status}`);
+    }
+    const text = await res.text();
+    return JSON.parse(text);
+  } catch (err) {
+    console.error(`Failed to fetch/parse blob at ${url}`, err);
+    // Log the first 200 characters of the response if we got a text body
+    try {
+      const res = await fetch(url, init);
+      const text = await res.text();
+      console.error('Blob response preview:', text.substring(0, 200));
+    } catch { }
+    return null; // or return an appropriate default (e.g., [])
+  }
+}
+
 // ------------------------------------------------------------------
 // Read / Write helpers
 // ------------------------------------------------------------------
@@ -46,30 +66,49 @@ async function readErrors(): Promise<ErrorLog[]> {
     try {
       const { blobs } = await list({ prefix: 'errors.json' });
       if (blobs.length > 0) {
-        const response = await fetch(blobs[0].url, {
+        const url = blobs[0].url;
+        const response = await fetch(url, {
           headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
         });
         const text = await response.text();
-        return JSON.parse(text);
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.warn('⚠️  Blob returned non‑JSON, using in‑memory fallback');
+          return localCache;
+        }
       }
     } catch (e) {
       console.error('Failed to read from Blob:', e);
     }
-    return [];
+    return localCache;
   }
   return [...localCache];
 }
 
 async function writeErrors(errors: ErrorLog[]): Promise<void> {
+  // Always update local in‑memory cache
+  localCache = errors;
+
   if (USE_BLOB) {
-    await put('errors.json', JSON.stringify(errors, null, 2), {
-      access: 'private',
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    });
+    try {
+      await put('errors.json', JSON.stringify(errors, null, 2), {
+        access: 'private',
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      });
+    } catch (e) {
+      console.warn('⚠️  Failed to write to Blob, using in‑memory fallback');
+      // If local file exists (dev), write to it as well
+      if (!IS_VERCEL) {
+        fs.writeFileSync(ERRORS_FILE, JSON.stringify(errors, null, 2), 'utf-8');
+      }
+    }
   } else {
-    localCache = errors;
-    fs.writeFileSync(ERRORS_FILE, JSON.stringify(errors, null, 2), 'utf-8');
+    // Already handled for file-based storage
+    if (fs.existsSync(DATA_DIR) || !USE_BLOB) {
+      fs.writeFileSync(ERRORS_FILE, JSON.stringify(errors, null, 2), 'utf-8');
+    }
   }
 }
 

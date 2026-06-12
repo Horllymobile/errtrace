@@ -117,31 +117,36 @@ export default function Dashboard() {
     }
   };
 
+  const onRefresh = () => {
+    activeTab === 'errors' ? fetchErrors() : fetchEvents(); toast.success('Refreshed')
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold">
+          <h1 className="text-3xl sm:text-4xl font-bold">
             <span className="text-errtrace-primary">Err</span>
             <span className="text-white">Trace</span>
           </h1>
-          <p className="text-errtrace-dark-400 mt-2">Error & Event Tracking</p>
+          <p className="text-errtrace-dark-400 mt-1 sm:mt-2 text-sm sm:text-base">
+            Error & Event Tracking
+          </p>
         </div>
-        <div className="flex items-center space-x-3 flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <DateFilter value={dateRange} onChange={setDateRange} />
-          <button onClick={handleTestEvent} className="btn bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
+          <button onClick={handleTestEvent} className="btn bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-3 py-2 text-sm">
             <Activity className="h-4 w-4" />
             <span>Test Event</span>
           </button>
-          <button onClick={handleTestError} className="btn bg-errtrace-warning hover:bg-yellow-600 text-white flex items-center space-x-2">
+          <button onClick={handleTestError} className="btn bg-errtrace-warning hover:bg-yellow-600 text-white flex items-center gap-2 px-3 py-2 text-sm">
             <Bug className="h-4 w-4" />
             <span>Test Error</span>
           </button>
-          <button onClick={() => setShowClearConfirm(true)} className="btn bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2">
+          <button onClick={() => setShowClearConfirm(true)} className="btn bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 px-3 py-2 text-sm">
             <Trash2 className="h-4 w-4" />
             <span>Clear All</span>
           </button>
-          <button onClick={() => { activeTab === 'errors' ? fetchErrors() : fetchEvents(); toast.success('Refreshed'); }} className="btn bg-errtrace-primary hover:bg-errtrace-secondary text-white flex items-center space-x-2">
+          <button onClick={onRefresh} className="btn bg-errtrace-primary hover:bg-errtrace-secondary text-white flex items-center gap-2 px-3 py-2 text-sm">
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
           </button>
