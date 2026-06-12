@@ -1,12 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Move this from experimental to top level
-  serverExternalPackages: ['undici', '@vercel/blob'],
-
-  // Empty turbopack config to suppress the warning (we're not customizing it)
+  serverExternalPackages: ['@vercel/blob'],
   turbopack: {},
 
-  // CORS headers for API routes
   async headers() {
     return [
       {
@@ -14,11 +10,17 @@ const nextConfig = {
         headers: [
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
           { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
+          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-ErrTrace-Key' },
+          { key: 'Access-Control-Max-Age', value: '86400' },
         ],
       },
     ];
+  },
+
+  // Prevent Vercel from redirecting API routes
+  async redirects() {
+    return [];
   },
 };
 

@@ -8,7 +8,7 @@ import ErrorTable from '@/components/ErrorTable'
 import ErrorModal from '@/components/ErrorModal'
 import Pagination from '@/components/Pagination'
 import toast from 'react-hot-toast'
-import { Bug, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react';
 import { ErrTrace } from 'errtrace';
 
 export default function Dashboard() {
@@ -105,26 +105,26 @@ export default function Dashboard() {
     })
     : null;
 
-  const handleTestError = async () => {
-    if (!errtrace) return;
-    try {
-      const errorId = await errtrace.captureError(
-        new Error('Test error from dashboard'),
-        {
-          metadata: { source: 'dashboard-test' },
-        }
-      );
-      if (errorId) {
-        toast.success(`Test error sent! ID: ${errorId}`);
-        fetchErrors();
-      } else {
-        toast.error('Failed to send test error');
-      }
-    } catch (err) {
-      toast.error('Network error');
-      console.error(err);
-    }
-  };
+  // const handleTestError = async () => {
+  //   if (!errtrace) return;
+  //   try {
+  //     const errorId = await errtrace.captureError(
+  //       new Error('Test error from dashboard'),
+  //       {
+  //         metadata: { source: 'dashboard-test' },
+  //       }
+  //     );
+  //     if (errorId) {
+  //       toast.success(`Test error sent! ID: ${errorId}`);
+  //       fetchErrors();
+  //     } else {
+  //       toast.error('Failed to send test error');
+  //     }
+  //   } catch (err) {
+  //     toast.error('Network error');
+  //     console.error(err);
+  //   }
+  // };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -137,13 +137,13 @@ export default function Dashboard() {
           <p className="text-errtrace-dark-400 mt-2">Error tracking dashboard</p>
         </div>
         <div className="flex items-center space-x-3">
-          <button
+          {/* <button
             onClick={handleTestError}
             className="btn bg-errtrace-warning hover:bg-yellow-600 text-white flex items-center space-x-2"
           >
             <Bug className="h-4 w-4" />
             <span>Test Error</span>
-          </button>
+          </button> */}
           <button
             onClick={() => {
               fetchErrors();
