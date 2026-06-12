@@ -1,4 +1,4 @@
-import ErrTrace from '../client'
+import ErrTrace from './client'
 
 /**
  * Next.js integration for ErrTrace

@@ -1,4 +1,4 @@
-import ErrTrace from '../client'
+import ErrTrace from './client'
 import { Request, Response, NextFunction } from 'express'
 
 /**

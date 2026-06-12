@@ -1,5 +1,5 @@
 import React from 'react'
-import ErrTrace from '../client'
+import ErrTrace from './client'
 
 interface ErrorBoundaryProps {
   errtrace: ErrTrace
