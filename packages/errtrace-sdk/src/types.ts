@@ -56,10 +56,6 @@ export interface User {
   [key: string]: any
 }
 
-export interface Transport {
-  send(event: ErrorEvent): Promise<boolean>
-}
-
 export interface ErrTraceClient {
   captureError(error: Error, options?: CaptureOptions): Promise<string | null>
   captureMessage(message: string, level?: LogLevel, options?: CaptureOptions): Promise<string | null>
@@ -67,6 +63,8 @@ export interface ErrTraceClient {
   addBreadcrumb(breadcrumb: Omit<Breadcrumb, 'timestamp'>): void
   setTags(tags: string[]): void
   setRelease(release: string): void
+  track(name: string, properties?: Record<string, any>): Promise<string | null>;
+  trackPageView(path?: string, title?: string, properties?: Record<string, any>): Promise<string | null>;
 }
 
 export interface CaptureOptions {
@@ -74,4 +72,32 @@ export interface CaptureOptions {
   tags?: string[]
   metadata?: Record<string, any>
   user?: User
+}
+
+// Add these new types
+export interface TrackEvent {
+  id: string;
+  name: string;
+  properties: Record<string, any>;
+  timestamp: string;
+  user?: User;
+  tags?: string[];
+  environment: string;
+  release?: string;
+}
+
+export interface PageView {
+  id: string;
+  path: string;
+  title?: string;
+  referrer?: string;
+  timestamp: string;
+  user?: User;
+  tags?: string[];
+  environment: string;
+}
+
+export interface Transport {
+  send(event: ErrorEvent): Promise<boolean>;
+  sendEvent(event: TrackEvent | PageView): Promise<boolean>;
 }

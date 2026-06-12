@@ -20,7 +20,7 @@ import {
 interface ErrorTableProps {
   errors: ErrorLog[]
   loading: boolean
-  onView: (id: string) => void
+  onView: (error: ErrorLog) => void
   onResolve: (id: string) => void
   onDelete: (id: string) => void
 }
@@ -250,7 +250,7 @@ export default function ErrorTable({ errors, loading, onView, onResolve, onDelet
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center space-x-1">
                   <button
-                    onClick={() => onView(error.id)}
+                    onClick={() => onView(error)}
                     className="p-1.5 text-errtrace-dark-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
                     title="View Details"
                   >

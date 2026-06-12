@@ -23,8 +23,8 @@ importers:
         specifier: ^3.3.1
         version: 3.6.0
       errtrace:
-        specifier: ^1.0.6
-        version: 1.0.6(express@5.2.1)(react@19.2.7)
+        specifier: ^1.0.8
+        version: 1.0.8(express@5.2.1)(react@19.2.7)
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.7)
@@ -859,8 +859,8 @@ packages:
   error-stack-parser@2.1.4:
     resolution: {integrity: sha512-Sk5V6wVazPhq5MhpO+AUxJn5x7XSXGl1R93Vn7i+zS15KDVxQijejNCrz8340/2bgLBjR9GtEG8ZVKONDjcqGQ==}
 
-  errtrace@1.0.6:
-    resolution: {integrity: sha512-OIiNybaxIS0RvsPJHKwfJA9hzJbxzPU85XmNCjpgNuqyrTi1WM8GQ6TJpKCkaAyxWg0yZRdf7ujxa5CEx0X9Dw==}
+  errtrace@1.0.8:
+    resolution: {integrity: sha512-WCYmubdPBJ2LNuH20EBg6PGIILbncvsrDzzWNgCYiRbzqSJoDhXNVBcFsKlybxa/0GFJqzI5gH80FehWTZncTw==}
     peerDependencies:
       express: '>=4.0.0'
       react: '>=17.0.0'
@@ -2084,7 +2084,7 @@ snapshots:
     dependencies:
       stackframe: 1.3.4
 
-  errtrace@1.0.6(express@5.2.1)(react@19.2.7):
+  errtrace@1.0.8(express@5.2.1)(react@19.2.7):
     dependencies:
       stacktrace-js: 2.0.2
       uuid: 9.0.1

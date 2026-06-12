@@ -7,7 +7,8 @@ import {
   User,
   LogLevel,
   CaptureOptions,
-  Transport
+  Transport,
+  TrackEvent
 } from './types'
 import { HTTPTransport } from './transports/http'
 import { ConsoleTransport } from './transports/console'
@@ -35,8 +36,8 @@ export class ErrTrace {
       debug: options.debug || false,
     }
 
-    this.transport = options.transport || 
-      (options.dsn 
+    this.transport = options.transport ||
+      (options.dsn
         ? new HTTPTransport(options.dsn, options.apiKey)
         : new ConsoleTransport())
 
@@ -60,13 +61,13 @@ export class ErrTrace {
    */
   async captureError(error: Error, options: CaptureOptions = {}): Promise<string | null> {
     if (!this.options.enabled) return null
-    
+
     // Apply sampling
     if (Math.random() > this.options.sampleRate) return null
 
     try {
       let stackTrace = error.stack || ''
-      
+
       // Try to get better stack trace
       try {
         const frames = await StackTrace.fromError(error)
@@ -102,7 +103,7 @@ export class ErrTrace {
       }
 
       const success = await this.transport.send(event)
-      
+
       if (this.options.debug) {
         console.log(`ErrTrace: Error ${success ? 'sent' : 'failed to send'} - ${event.id}`)
       }
@@ -118,12 +119,59 @@ export class ErrTrace {
    * Capture a message
    */
   async captureMessage(
-    message: string, 
-    level: LogLevel = 'info', 
+    message: string,
+    level: LogLevel = 'info',
     options: CaptureOptions = {}
   ): Promise<string | null> {
     const error = new Error(message)
     return this.captureError(error, { ...options, level })
+  }
+
+  /**
+ * Track a custom event
+ */
+  async track(name: string, properties: Record<string, any> = {}): Promise<string | null> {
+    if (!this.options.enabled) return null;
+    if (Math.random() > this.options.sampleRate) return null;
+
+    try {
+      const event: TrackEvent = {
+        id: uuidv4(),
+        name,
+        properties,
+        timestamp: new Date().toISOString(),
+        user: this.user || undefined,
+        tags: [...this.tags],
+        environment: this.options.environment,
+        release: this.release,
+      };
+
+      const success = await this.transport.sendEvent(event);
+      return success ? event.id : null;
+    } catch (err) {
+      console.error('ErrTrace: Failed to track event:', err);
+      return null;
+    }
+  }
+
+  /**
+ * Track a page view
+ */
+  async trackPageView(
+    path?: string,
+    title?: string,
+    properties: Record<string, any> = {}
+  ): Promise<string | null> {
+    const pagePath = path || (typeof window !== 'undefined' ? window.location.pathname : '/');
+    const pageTitle = title || (typeof document !== 'undefined' ? document.title : '');
+    const referrer = typeof document !== 'undefined' ? document.referrer : undefined;
+
+    return this.track('$pageview', {
+      path: pagePath,
+      title: pageTitle,
+      referrer,
+      ...properties,
+    });
   }
 
   /**
@@ -181,7 +229,7 @@ export class ErrTrace {
       if (originalOnError) {
         originalOnError(message, source, lineno, colno, error)
       }
-      
+
       this.captureError(
         error || new Error(message as string),
         {
@@ -198,8 +246,8 @@ export class ErrTrace {
       }
 
       this.captureError(
-        event.reason instanceof Error 
-          ? event.reason 
+        event.reason instanceof Error
+          ? event.reason
           : new Error(String(event.reason)),
         { metadata: { type: 'unhandledRejection' } }
       )

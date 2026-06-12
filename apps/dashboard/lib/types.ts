@@ -47,3 +47,19 @@ export interface ErrTraceStats {
   by_level: Array<{ level: string; count: number }>;
   recent_errors: ErrorLog[];
 }
+
+// Add to your existing types
+export interface TrackErrTraceEvent {
+  id: string;
+  name: string;
+  properties: Record<string, any>;
+  timestamp: string;
+  user?: {
+    id?: string;
+    email?: string;
+    username?: string;
+  };
+  tags?: string[];
+  environment: string;
+  release?: string;
+}
