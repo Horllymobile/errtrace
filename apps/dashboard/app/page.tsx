@@ -110,14 +110,14 @@ export default function Dashboard() {
           <p className="text-errtrace-dark-400 mt-2">Error & Event Tracking</p>
         </div>
         <div className="flex items-center space-x-3">
-          <button onClick={handleTestEvent} className="btn bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
+          {/* <button onClick={handleTestEvent} className="btn bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
             <Activity className="h-4 w-4" />
             <span>Test Event</span>
           </button>
           <button onClick={handleTestError} className="btn bg-errtrace-warning hover:bg-yellow-600 text-white flex items-center space-x-2">
             <Bug className="h-4 w-4" />
             <span>Test Error</span>
-          </button>
+          </button> */}
           <DateFilter value={dateRange} onChange={setDateRange} />
           <button onClick={() => { activeTab === 'errors' ? fetchErrors() : fetchEvents(); toast.success('Refreshed'); }} className="btn bg-errtrace-primary hover:bg-errtrace-secondary text-white flex items-center space-x-2">
             <RefreshCw className="h-4 w-4" />
