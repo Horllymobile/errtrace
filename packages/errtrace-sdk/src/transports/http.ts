@@ -33,7 +33,8 @@ export class HTTPTransport implements Transport {
             user: event.user,
             tags: event.tags,
             release: event.release,
-          }
+          },
+          user_id: event.user?.id || event.user?.email || null,
         }),
         signal: controller.signal,
       });
@@ -56,7 +57,14 @@ export class HTTPTransport implements Transport {
           'Content-Type': 'application/json',
           ...(this.apiKey && { 'X-ErrTrace-Key': this.apiKey }),
         },
-        body: JSON.stringify(event),
+        body: JSON.stringify({
+          name: event.name,
+          properties: event.properties,
+          timestamp: event.timestamp,
+          environment: event.environment,
+          tags: event.tags,
+          user_id: event.user?.id || event.user?.email || null,  // <-- ADD THIS
+        }),
       });
       return response.ok;
     } catch (error) {
