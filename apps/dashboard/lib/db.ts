@@ -16,7 +16,7 @@ export async function saveError(error: any) {
       metadata: typeof error.metadata === 'string'
         ? JSON.parse(error.metadata)
         : error.metadata || {},
-      user_identifier: error.user.id || null,   // <-- ADD
+      user_identifier: error?.user?.id || null,   // <-- ADD
       resolved: 0,
       created_at: error.created_at || new Date().toISOString(),
     })
