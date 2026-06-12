@@ -1,0 +1,12 @@
+{
+  "buildCommand": "cd apps/dashboard && pnpm build",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "outputDirectory": "apps/dashboard/.next",
+  "builds": [
+    {
+      "src": "apps/dashboard/package.json",
+      "use": "@vercel/next"
+    }
+  ]
+}
