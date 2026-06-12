@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40">
+  <!-- Icon: bug/E symbol -->
+  <g transform="translate(0, 2)">
+    <rect x="0" y="0" width="36" height="36" rx="8" fill="#0f172a" stroke="#6366f1" stroke-width="2"/>
+    <rect x="10" y="8" width="16" height="5" rx="2" fill="#6366f1"/>
+    <rect x="10" y="15" width="12" height="5" rx="2" fill="#6366f1"/>
+    <rect x="10" y="22" width="16" height="5" rx="2" fill="#6366f1"/>
+    <!-- Antennae -->
+    <line x1="26" y1="8" x2="30" y2="1" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+    <line x1="18" y1="8" x2="18" y2="0" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="30" cy="1" r="2.5" fill="#8b5cf6"/>
+    <circle cx="18" cy="0" r="2.5" fill="#8b5cf6"/>
+  </g>
+
+  <!-- Text: ErrTrace -->
+  <text x="46" y="26" font-family="'Inter', system-ui, sans-serif" font-weight="800" font-size="22" letter-spacing="-0.5">
+    <tspan fill="#6366f1">Err</tspan><tspan fill="#ffffff">Trace</tspan>
+  </text>
+</svg>

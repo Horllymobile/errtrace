@@ -1,0 +1,9 @@
+{
+  "name": "errtrace-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter dashboard dev",
+    "build:sdk": "pnpm --filter errtrace build",
+    "publish:sdk": "pnpm --filter errtrace publish --access public"
+  }
+}
