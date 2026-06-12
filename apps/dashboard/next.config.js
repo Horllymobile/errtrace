@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['@vercel/blob'],
+  serverExternalPackages: [],
   // outputFileTracingRoot: path.join(__dirname, '../../'),
   async headers() {
     return [

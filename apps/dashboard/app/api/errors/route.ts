@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
-import { saveError, getErrors } from '@/lib/db'
+import { NextRequest, NextResponse } from 'next/server';
+import { saveError, getErrors } from '@/lib/db';
+import { v4 as uuidv4 } from 'uuid';
 
-// POST /api/errors - Log a new error
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await request.json();
     const {
       message,
       stack_trace,
@@ -13,22 +12,15 @@ export async function POST(request: NextRequest) {
       environment = 'production',
       url,
       user_agent,
-      metadata = {}
-    } = body
+      metadata = {},
+    } = body;
 
     if (!message) {
-      return NextResponse.json(
-        { error: 'Message is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    const id = uuidv4()
-    const ip_address = request.headers.get('x-forwarded-for') || 
-                      request.headers.get('x-real-ip') || 
-                      'unknown'
-
-    const error = {
+    const id = uuidv4();
+    await saveError({
       id,
       message,
       stack_trace: stack_trace || '',
@@ -36,32 +28,18 @@ export async function POST(request: NextRequest) {
       environment,
       url: url || '',
       user_agent: user_agent || '',
-      ip_address,
       metadata: JSON.stringify(metadata),
       created_at: new Date().toISOString(),
-      resolved: 0
-    }
+      resolved: 0,
+    } as any);
 
-    await saveError(error)
-
-    return NextResponse.json(
-      {
-        success: true,
-        error_id: id,
-        message: 'Error logged successfully'
-      },
-      { status: 201 }
-    )
+    return NextResponse.json({ success: true, error_id: id }, { status: 201 });
   } catch (error) {
-    console.error('Error logging error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Error logging error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// GET /api/errors - List errors
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -72,13 +50,11 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const dateRange = searchParams.get('dateRange') || 'all';
 
-    const result = await getErrors({ 
-      limit, offset, level, resolved, search, dateRange 
-    });
+    const result = await getErrors({ limit, offset, level, resolved, search, dateRange });
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching errors:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ errors: [], pagination: { total: 0, limit: 20, offset: 0, has_more: false } });
   }
 }
 

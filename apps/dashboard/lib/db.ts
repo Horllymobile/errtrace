@@ -1,153 +1,33 @@
-import { put, list } from '@vercel/blob';
-import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-import path from 'path';
-import { ErrorLog } from './types';
+import { supabaseAdmin } from './supabase';
+import { ErrorLog, TrackErrTraceEvent } from './types';
 
 // ------------------------------------------------------------------
-// Determine storage backend
-// ------------------------------------------------------------------
-const IS_VERCEL = process.env.VERCEL === '1';
-const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
-
-// Only use Blob if we have a token, OR if we're on Vercel
-const USE_BLOB = !!(BLOB_TOKEN) || IS_VERCEL;
-
-// Local JSON fallback (only used locally, not on Vercel)
-const DATA_DIR = path.join(process.cwd(), 'data');
-const ERRORS_FILE = path.join(DATA_DIR, 'errors.json');
-let localCache: ErrorLog[] = [];
-
-if (!USE_BLOB) {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (fs.existsSync(ERRORS_FILE)) {
-    try {
-      localCache = JSON.parse(fs.readFileSync(ERRORS_FILE, 'utf-8'));
-    } catch (e) {
-      console.error('Failed to load local errors:', e);
-    }
-  }
-  console.log('📁 Using local JSON file storage');
-} else {
-  if (!BLOB_TOKEN) {
-    throw new Error(
-      'BLOB_READ_WRITE_TOKEN is required when running on Vercel. ' +
-      'Add it in your project settings: Settings → Environment Variables'
-    );
-  }
-  console.log('☁️  Using Vercel Blob storage');
-}
-
-async function safeFetchJson(url: string, init?: RequestInit) {
-  try {
-    const res = await fetch(url, init);
-    if (!res.ok) {
-      throw new Error(`Blob fetch failed with status ${res.status}`);
-    }
-    const text = await res.text();
-    return JSON.parse(text);
-  } catch (err) {
-    console.error(`Failed to fetch/parse blob at ${url}`, err);
-    // Log the first 200 characters of the response if we got a text body
-    try {
-      const res = await fetch(url, init);
-      const text = await res.text();
-      console.error('Blob response preview:', text.substring(0, 200));
-    } catch { }
-    return null; // or return an appropriate default (e.g., [])
-  }
-}
-
-// ------------------------------------------------------------------
-// Read / Write helpers
-// ------------------------------------------------------------------
-async function readErrors(): Promise<ErrorLog[]> {
-  if (USE_BLOB) {
-    try {
-      const { blobs } = await list({ prefix: 'errors.json' });
-      if (blobs.length > 0) {
-        const url = blobs[0].url;
-        const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
-        });
-        const text = await response.text();
-        try {
-          return JSON.parse(text);
-        } catch {
-          console.warn('⚠️  Blob returned non‑JSON, using in‑memory fallback');
-          return localCache;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to read from Blob:', e);
-    }
-    return localCache;
-  }
-  return [...localCache];
-}
-
-async function writeErrors(errors: ErrorLog[]): Promise<void> {
-  // Always update local in‑memory cache
-  localCache = errors;
-
-  if (USE_BLOB) {
-    try {
-      await put('errors.json', JSON.stringify(errors, null, 2), {
-        access: 'private',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-      });
-    } catch (e) {
-      console.warn('⚠️  Failed to write to Blob, using in‑memory fallback');
-      // If local file exists (dev), write to it as well
-      if (!IS_VERCEL) {
-        fs.writeFileSync(ERRORS_FILE, JSON.stringify(errors, null, 2), 'utf-8');
-      }
-    }
-  } else {
-    // Already handled for file-based storage
-    if (fs.existsSync(DATA_DIR) || !USE_BLOB) {
-      fs.writeFileSync(ERRORS_FILE, JSON.stringify(errors, null, 2), 'utf-8');
-    }
-  }
-}
-
-// ------------------------------------------------------------------
-// Public API
+// Errors
 // ------------------------------------------------------------------
 export async function saveError(error: ErrorLog) {
-  const errors = await readErrors();
-  const newError: ErrorLog = {
-    ...error,
-    id: error.id || uuidv4(),
-    created_at: error.created_at || new Date().toISOString(),
-    metadata: typeof error.metadata === 'string' ? error.metadata : JSON.stringify(error.metadata || {}),
-  };
-  errors.push(newError);
-  await writeErrors(errors);
-  return newError.id;
-}
+  const { data, error: dbError } = await supabaseAdmin
+    .from('errors')
+    .insert({
+      id: error.id,
+      level: error.level || 'error',
+      message: error.message,
+      url: error.url,
+      stack_trace: error.stack_trace,
+      metadata: typeof error.metadata === 'string'
+        ? JSON.parse(error.metadata)
+        : error.metadata || {},
+      resolved: error.resolved || 0,
+      created_at: error.created_at || new Date().toISOString(),
+    })
+    .select('id')
+    .single();
 
-export function getDateFilter(dateRange: string): string | null {
-  const now = new Date();
-  switch (dateRange) {
-    case 'today':
-      return now.toISOString().split('T')[0];
-    case 'yesterday':
-      const yesterday = new Date(now.getTime() - 86400000);
-      return yesterday.toISOString().split('T')[0];
-    case '7d':
-      const sevenDays = new Date(now.getTime() - 7 * 86400000);
-      return sevenDays.toISOString();
-    case '30d':
-      const thirtyDays = new Date(now.getTime() - 30 * 86400000);
-      return thirtyDays.toISOString();
-    case '90d':
-      const ninetyDays = new Date(now.getTime() - 90 * 86400000);
-      return ninetyDays.toISOString();
-    default:
-      return null; // all time
+  if (dbError) {
+    console.error('Error saving error:', dbError);
+    throw dbError;
   }
+
+  return data.id;
 }
 
 export async function getErrors({
@@ -165,81 +45,329 @@ export async function getErrors({
   search?: string;
   dateRange?: string;
 } = {}) {
-  let errors = await readErrors();
+  let query = supabaseAdmin
+    .from('errors')
+    .select('*', { count: 'exact' });
 
-  if (level) errors = errors.filter(e => e.level === level);
+  // Filters
+  if (level) {
+    query = query.eq('level', level);
+  }
   if (resolved !== undefined && resolved !== '') {
-    errors = errors.filter(e => e.resolved === (resolved === '1' ? 1 : 0));
+    query = query.eq('resolved', resolved === '1' ? 1 : 0);
   }
   if (search) {
-    const s = search.toLowerCase();
-    errors = errors.filter(e =>
-      (e.message && e.message.toLowerCase().includes(s)) ||
-      (e.url && e.url.toLowerCase().includes(s)) ||
-      (e.stack_trace && e.stack_trace.toLowerCase().includes(s))
+    query = query.or(
+      `message.ilike.%${search}%,url.ilike.%${search}%,stack_trace.ilike.%${search}%`
     );
   }
 
+  // Date filter
   const dateFilter = getDateFilter(dateRange);
   if (dateFilter) {
-    if (dateRange === 'today' || dateRange === 'yesterday') {
-      // Exact date match
-      errors = errors.filter(e => e.created_at?.startsWith(dateFilter));
-    } else {
-      // Greater than or equal
-      errors = errors.filter(e => e.created_at && new Date(e.created_at) >= new Date(dateFilter));
-    }
+    query = query.gte('created_at', dateFilter);
   }
 
-  errors.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // Pagination
+  const from = offset;
+  const to = offset + limit - 1;
 
-  const total = errors.length;
-  const paged = errors.slice(offset, offset + limit);
+  const { data, count, error: dbError } = await query
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (dbError) {
+    console.error('Error fetching errors:', dbError);
+    throw dbError;
+  }
 
   return {
-    errors: paged,
-    pagination: { total, limit, offset, has_more: offset + limit < total },
+    errors: data || [],
+    pagination: {
+      total: count || 0,
+      limit,
+      offset,
+      has_more: (count || 0) > offset + limit,
+    },
   };
 }
 
 export async function getError(id: string) {
-  const errors = await readErrors();
-  return errors.find(e => e.id === id) || null;
+  const { data, error } = await supabaseAdmin
+    .from('errors')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching error:', error);
+    return null;
+  }
+
+  return data;
 }
 
 export async function updateError(id: string, updates: Partial<ErrorLog>) {
-  const errors = await readErrors();
-  const index = errors.findIndex(e => e.id === id);
-  if (index === -1) throw new Error('Error not found');
-  errors[index] = { ...errors[index], ...updates };
-  await writeErrors(errors);
+  const { error } = await supabaseAdmin
+    .from('errors')
+    .update({
+      ...(updates.resolved !== undefined && { resolved: updates.resolved }),
+      ...(updates.message && { message: updates.message }),
+    })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating error:', error);
+    throw error;
+  }
 }
 
 export async function deleteError(id: string) {
-  let errors = await readErrors();
-  errors = errors.filter(e => e.id !== id);
-  await writeErrors(errors);
+  const { error } = await supabaseAdmin
+    .from('errors')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting error:', error);
+    throw error;
+  }
 }
 
-export async function getStats() {
-  const errors = await readErrors();
-  const total = errors.length;
-  const unresolved = errors.filter(e => !e.resolved).length;
+export async function clearErrors() {
+  const { error } = await supabaseAdmin
+    .from('errors')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+  if (error) {
+    console.error('Error clearing errors:', error);
+    throw error;
+  }
+}
+
+export async function getErrorStats() {
+  const { data: total, error: totalError } = await supabaseAdmin
+    .from('errors')
+    .select('*', { count: 'exact', head: true });
+
+  const { data: unresolved, error: unresolvedError } = await supabaseAdmin
+    .from('errors')
+    .select('*', { count: 'exact', head: true })
+    .eq('resolved', 0);
+
   const today = new Date().toISOString().split('T')[0];
-  const todayCount = errors.filter(e => e.created_at.startsWith(today)).length;
+  const { data: todayData, error: todayError } = await supabaseAdmin
+    .from('errors')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', today);
 
-  const byLevel: Record<string, number> = {};
-  errors.forEach(e => { byLevel[e.level] = (byLevel[e.level] || 0) + 1; });
+  // By level
+  const { data: byLevel, error: levelError } = await supabaseAdmin
+    .from('errors')
+    .select('level')
+    .then(({ data }) => {
+      const counts: Record<string, number> = {};
+      data?.forEach((e: any) => {
+        counts[e.level] = (counts[e.level] || 0) + 1;
+      });
+      return {
+        data: Object.entries(counts).map(([level, count]) => ({ level, count })),
+        error: null,
+      };
+    });
 
-  const recent = [...errors]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
+  // Recent errors
+  const { data: recent, error: recentError } = await supabaseAdmin
+    .from('errors')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(5);
 
   return {
-    total,
-    unresolved,
-    today: todayCount,
-    by_level: Object.entries(byLevel).map(([level, count]) => ({ level, count })),
-    recent_errors: recent,
+    total: total?.length || 0,
+    unresolved: unresolved?.length || 0,
+    today: todayData?.length || 0,
+    by_level: byLevel || [],
+    recent_errors: recent || [],
   };
+}
+
+// ------------------------------------------------------------------
+// Events
+// ------------------------------------------------------------------
+export async function saveEvent(event: {
+  id?: string;
+  name: string;
+  properties?: Record<string, any>;
+  timestamp?: string;
+  environment?: string;
+  tags?: string[];
+  user?: any;
+}) {
+  const { data, error: dbError } = await supabaseAdmin
+    .from('events')
+    .insert({
+      id: event.id || undefined,
+      name: event.name,
+      url: event.properties?.path || event.properties?.url || null,
+      metadata: {
+        ...event.properties,
+        user: event.user,
+        tags: event.tags,
+        environment: event.environment,
+      },
+      created_at: event.timestamp || new Date().toISOString(),
+    })
+    .select('id')
+    .single();
+
+  if (dbError) {
+    console.error('Error saving event:', dbError);
+    throw dbError;
+  }
+
+  return data.id;
+}
+
+export async function getEvents({
+  limit = 50,
+  name,
+  dateRange = 'all',
+}: {
+  limit?: number;
+  name?: string;
+  dateRange?: string;
+} = {}) {
+  let query = supabaseAdmin
+    .from('events')
+    .select('*', { count: 'exact' });
+
+  if (name) {
+    query = query.eq('name', name);
+  }
+
+  const dateFilter = getDateFilter(dateRange);
+  if (dateFilter) {
+    query = query.gte('created_at', dateFilter);
+  }
+
+  const { data, count, error } = await query
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching events:', error);
+    throw error;
+  }
+
+  return {
+    events: data || [],
+    total: count || 0,
+  };
+}
+
+export async function deleteEvent(id: string) {
+  const { error } = await supabaseAdmin
+    .from('events')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting event:', error);
+    throw error;
+  }
+}
+
+export async function clearEvents() {
+  const { error } = await supabaseAdmin
+    .from('events')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000');
+
+  if (error) {
+    console.error('Error clearing events:', error);
+    throw error;
+  }
+}
+
+export async function getEventStats() {
+  const { data: total, error: totalError } = await supabaseAdmin
+    .from('events')
+    .select('*', { count: 'exact', head: true });
+
+  const today = new Date().toISOString().split('T')[0];
+  const { data: todayData } = await supabaseAdmin
+    .from('events')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', today);
+
+  // Top events
+  const { data: topEvents } = await supabaseAdmin
+    .from('events')
+    .select('name');
+
+  const eventCounts: Record<string, number> = {};
+  topEvents?.forEach((e: any) => {
+    eventCounts[e.name] = (eventCounts[e.name] || 0) + 1;
+  });
+
+  const sorted = Object.entries(eventCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([name, count]) => ({ name, count }));
+
+  // Events per hour (last 24h)
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: hourlyData } = await supabaseAdmin
+    .from('events')
+    .select('created_at')
+    .gte('created_at', twentyFourHoursAgo);
+
+  const hourlyEvents: Record<string, number> = {};
+  for (let i = 23; i >= 0; i--) {
+    const hour = new Date(Date.now() - i * 3600000);
+    const hourKey = hour.toISOString().substring(0, 13);
+    hourlyEvents[hourKey] = 0;
+  }
+
+  hourlyData?.forEach((e: any) => {
+    const eventHour = e.created_at.substring(0, 13);
+    if (hourlyEvents[eventHour] !== undefined) {
+      hourlyEvents[eventHour]++;
+    }
+  });
+
+  return {
+    total: total?.length || 0,
+    today: todayData?.length || 0,
+    topEvents: sorted,
+    eventTimeline: Object.entries(hourlyEvents).map(([hour, count]) => ({
+      hour,
+      count,
+    })),
+  };
+}
+
+// ------------------------------------------------------------------
+// Helpers
+// ------------------------------------------------------------------
+function getDateFilter(dateRange: string): string | null {
+  const now = new Date();
+  switch (dateRange) {
+    case 'today':
+      return now.toISOString().split('T')[0];
+    case 'yesterday': {
+      const yesterday = new Date(now.getTime() - 86400000);
+      return yesterday.toISOString().split('T')[0];
+    }
+    case '7d':
+      return new Date(now.getTime() - 7 * 86400000).toISOString();
+    case '30d':
+      return new Date(now.getTime() - 30 * 86400000).toISOString();
+    case '90d':
+      return new Date(now.getTime() - 90 * 86400000).toISOString();
+    default:
+      return null;
+  }
 }
