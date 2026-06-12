@@ -1,4 +1,4 @@
-import { Transport, ErrorEvent } from '../types'
+import { Transport, ErrorEvent, PageView, TrackEvent } from '../types'
 
 export class HTTPTransport implements Transport {
   private endpoint: string
@@ -42,6 +42,25 @@ export class HTTPTransport implements Transport {
       return response.ok;
     } catch (error) {
       console.error('ErrTrace: Failed to send error:', error);
+      return false;
+    }
+  }
+
+  async sendEvent(event: TrackEvent): Promise<boolean> {
+    try {
+      // Remove /api/errors from the endpoint and add /api/events
+      const baseUrl = this.endpoint.replace(/\/api\/errors\/?$/, '');
+      const response = await fetch(`${baseUrl}/api/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(this.apiKey && { 'X-ErrTrace-Key': this.apiKey }),
+        },
+        body: JSON.stringify(event),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('ErrTrace: Failed to send event:', error);
       return false;
     }
   }

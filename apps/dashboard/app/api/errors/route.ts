@@ -64,21 +64,21 @@ export async function POST(request: NextRequest) {
 // GET /api/errors - List errors
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const offset = parseInt(searchParams.get('offset') || '0')
-    const level = searchParams.get('level') || undefined
-    const resolved = searchParams.get('resolved') || undefined
-    const search = searchParams.get('search') || undefined
+    const searchParams = request.nextUrl.searchParams;
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const offset = parseInt(searchParams.get('offset') || '0');
+    const level = searchParams.get('level') || undefined;
+    const resolved = searchParams.get('resolved') || undefined;
+    const search = searchParams.get('search') || undefined;
+    const dateRange = searchParams.get('dateRange') || 'all';
 
-    const result = await getErrors({ limit, offset, level, resolved, search })
-    return NextResponse.json(result)
+    const result = await getErrors({ 
+      limit, offset, level, resolved, search, dateRange 
+    });
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching errors:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Error fetching errors:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

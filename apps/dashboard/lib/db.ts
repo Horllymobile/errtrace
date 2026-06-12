@@ -89,18 +89,42 @@ export async function saveError(error: ErrorLog) {
   return newError.id;
 }
 
+export function getDateFilter(dateRange: string): string | null {
+  const now = new Date();
+  switch (dateRange) {
+    case 'today':
+      return now.toISOString().split('T')[0];
+    case 'yesterday':
+      const yesterday = new Date(now.getTime() - 86400000);
+      return yesterday.toISOString().split('T')[0];
+    case '7d':
+      const sevenDays = new Date(now.getTime() - 7 * 86400000);
+      return sevenDays.toISOString();
+    case '30d':
+      const thirtyDays = new Date(now.getTime() - 30 * 86400000);
+      return thirtyDays.toISOString();
+    case '90d':
+      const ninetyDays = new Date(now.getTime() - 90 * 86400000);
+      return ninetyDays.toISOString();
+    default:
+      return null; // all time
+  }
+}
+
 export async function getErrors({
   limit = 20,
   offset = 0,
   level,
   resolved,
   search,
+  dateRange = 'all',
 }: {
   limit?: number;
   offset?: number;
   level?: string;
   resolved?: string;
   search?: string;
+  dateRange?: string;
 } = {}) {
   let errors = await readErrors();
 
@@ -115,6 +139,17 @@ export async function getErrors({
       (e.url && e.url.toLowerCase().includes(s)) ||
       (e.stack_trace && e.stack_trace.toLowerCase().includes(s))
     );
+  }
+
+  const dateFilter = getDateFilter(dateRange);
+  if (dateFilter) {
+    if (dateRange === 'today' || dateRange === 'yesterday') {
+      // Exact date match
+      errors = errors.filter(e => e.created_at?.startsWith(dateFilter));
+    } else {
+      // Greater than or equal
+      errors = errors.filter(e => e.created_at && new Date(e.created_at) >= new Date(dateFilter));
+    }
   }
 
   errors.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
