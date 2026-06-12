@@ -209,6 +209,7 @@ export async function saveEvent(event: {
     .from('events')
     .insert({
       id: event.id || undefined,
+      user_id: event.user.id,
       name: event.name,
       url: event.properties?.path || event.properties?.url || null,
       metadata: {
