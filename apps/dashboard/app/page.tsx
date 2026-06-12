@@ -8,7 +8,7 @@ import ErrorTable from '@/components/ErrorTable'
 import ErrorModal from '@/components/ErrorModal'
 import Pagination from '@/components/Pagination'
 import toast from 'react-hot-toast'
-import { Activity, AlertTriangle, Bug, RefreshCw } from 'lucide-react';
+import { Activity, AlertTriangle, Bug, RefreshCw, Trash2 } from 'lucide-react';
 import { ErrTrace } from 'errtrace';
 import EventModal from '@/components/EventModal'
 import EventTable from '@/components/EventTable'
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [selectedEvent, setSelectedEvent] = useState<TrackErrTraceEvent | null>(null)
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange>('all')
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const fetchErrors = useCallback(async () => {
     setLoading(true)
@@ -99,6 +100,23 @@ export default function Dashboard() {
     fetchEvents();
   };
 
+  const handleClearAll = async () => {
+    try {
+      if (activeTab === 'errors') {
+        await fetch('/api/errors/clear', { method: 'DELETE' });
+        toast.success('All errors cleared');
+        fetchErrors();
+      } else {
+        await fetch('/api/events/clear', { method: 'DELETE' });
+        toast.success('All events cleared');
+        fetchEvents();
+      }
+      setShowClearConfirm(false);
+    } catch (error) {
+      toast.error('Failed to clear');
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -109,16 +127,20 @@ export default function Dashboard() {
           </h1>
           <p className="text-errtrace-dark-400 mt-2">Error & Event Tracking</p>
         </div>
-        <div className="flex items-center space-x-3">
-          {/* <button onClick={handleTestEvent} className="btn bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
+        <div className="flex items-center space-x-3 flex-wrap gap-2">
+          <DateFilter value={dateRange} onChange={setDateRange} />
+          <button onClick={handleTestEvent} className="btn bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
             <Activity className="h-4 w-4" />
             <span>Test Event</span>
           </button>
           <button onClick={handleTestError} className="btn bg-errtrace-warning hover:bg-yellow-600 text-white flex items-center space-x-2">
             <Bug className="h-4 w-4" />
             <span>Test Error</span>
-          </button> */}
-          <DateFilter value={dateRange} onChange={setDateRange} />
+          </button>
+          <button onClick={() => setShowClearConfirm(true)} className="btn bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2">
+            <Trash2 className="h-4 w-4" />
+            <span>Clear All</span>
+          </button>
           <button onClick={() => { activeTab === 'errors' ? fetchErrors() : fetchEvents(); toast.success('Refreshed'); }} className="btn bg-errtrace-primary hover:bg-errtrace-secondary text-white flex items-center space-x-2">
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
@@ -174,6 +196,41 @@ export default function Dashboard() {
 
       {selectedError && <ErrorModal error={selectedError} onClose={() => setSelectedError(null)} />}
       {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
+
+      {/* Clear All Confirmation Modal */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowClearConfirm(false)} />
+          <div className="relative bg-errtrace-dark-900 border border-errtrace-dark-800 rounded-xl p-6 max-w-md w-full shadow-2xl z-50">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/10 mb-4">
+                <Trash2 className="h-6 w-6 text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Clear All {activeTab === 'errors' ? 'Errors' : 'Events'}
+              </h3>
+              <p className="text-errtrace-dark-400 mb-6">
+                Are you sure you want to delete all {activeTab === 'errors' ? 'errors' : 'events'}?
+                This action cannot be undone.
+              </p>
+              <div className="flex space-x-3 justify-center">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="btn bg-errtrace-dark-800 text-errtrace-dark-300 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleClearAll}
+                  className="btn bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Yes, Clear All
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
