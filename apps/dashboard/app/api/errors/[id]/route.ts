@@ -3,10 +3,11 @@ import { getError, updateError, deleteError } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const error = await getError(params.id)
+    const { id } = await params
+    const error = await getError(id)
     
     if (!error?.id) {
       return NextResponse.json(
@@ -17,7 +18,7 @@ export async function GET(
 
     return NextResponse.json(error)
   } catch (error) {
-    console.error('Error fetching error:', error)
+    console.error('ErrTrace: Error fetching details:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -27,14 +28,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const updates = await request.json()
-    await updateError(params.id, updates)
+    await updateError(id, updates)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error updating error:', error)
+    console.error('ErrTrace: Error updating:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -44,13 +46,14 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deleteError(params.id)
+    const { id } = await params
+    await deleteError(id)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting error:', error)
+    console.error('ErrTrace: Error deleting:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { ErrorLog } from '@/lib/types'
-import {
-  AlertCircle,
-  AlertTriangle,
-  Info,
-  Bug,
-  Eye,
-  CheckCircle,
+import { 
+  AlertCircle, 
+  AlertTriangle, 
+  Info, 
+  Bug, 
+  Eye, 
+  CheckCircle, 
   Trash2,
   ChevronDown,
   ChevronRight,
@@ -122,7 +122,7 @@ export default function ErrorTable({ errors, loading, onView, onResolve, onDelet
               selectedErrors.forEach(id => onResolve(id))
               setSelectedErrors(new Set())
             }}
-            className="btn btn-success text-xs py-1 px-3"
+            className="btn bg-green-600 hover:bg-green-700 text-xs py-1 px-3"
           >
             Resolve All
           </button>
@@ -133,7 +133,7 @@ export default function ErrorTable({ errors, loading, onView, onResolve, onDelet
                 setSelectedErrors(new Set())
               }
             }}
-            className="btn btn-danger text-xs py-1 px-3"
+            className="btn bg-red-600 hover:bg-red-700 text-xs py-1 px-3"
           >
             Delete All
           </button>
@@ -146,7 +146,7 @@ export default function ErrorTable({ errors, loading, onView, onResolve, onDelet
             <th className="px-6 py-3 text-left">
               <input
                 type="checkbox"
-                checked={selectedErrors.size === errors.length}
+                checked={selectedErrors.size === errors.length && errors.length > 0}
                 onChange={toggleSelectAll}
                 className="rounded border-errtrace-dark-600 bg-errtrace-dark-800 text-errtrace-primary focus:ring-errtrace-primary"
               />
@@ -173,129 +173,108 @@ export default function ErrorTable({ errors, loading, onView, onResolve, onDelet
         </thead>
         <tbody className="divide-y divide-errtrace-dark-800">
           {errors.map((error) => (
-            <>
-              <tr
-                key={error.id}
-                className={`hover:bg-errtrace-dark-800/50 transition-colors ${expandedRows.has(error.id) ? 'bg-errtrace-dark-800/30' : ''
-                  }`}
-              >
-                <td className="px-6 py-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedErrors.has(error.id)}
-                    onChange={() => toggleSelect(error.id)}
-                    className="rounded border-errtrace-dark-600 bg-errtrace-dark-800 text-errtrace-primary focus:ring-errtrace-primary"
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${getLevelStyle(error.level)}`}>
-                    {getLevelIcon(error.level)}
-                    <span>{error.level.toUpperCase()}</span>
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => toggleRow(error.id)}
-                      className="text-errtrace-dark-400 hover:text-white"
-                    >
-                      {expandedRows.has(error.id) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
-                    <div>
-                      <div className="text-sm font-medium text-white">
-                        {error.message.length > 80
-                          ? `${error.message.substring(0, 80)}...`
-                          : error.message}
-                      </div>
-                      {error.url && (
-                        <div className="flex items-center space-x-1 mt-1 text-xs text-errtrace-dark-400">
-                          <Globe className="h-3 w-3" />
-                          <span>{error.url}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-errtrace-dark-300">
-                    {error.environment}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-1 text-sm text-errtrace-dark-400">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>{new Date(error.created_at).toLocaleString()}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${error.resolved
-                      ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                      : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                    }`}>
-                    {error.resolved ? 'Resolved' : 'Unresolved'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={() => onView(error.id)}
-                      className="p-1.5 text-errtrace-dark-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
-                      title="View Details"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    {!error.resolved && (
-                      <button
-                        onClick={() => onResolve(error.id)}
-                        className="p-1.5 text-errtrace-dark-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all"
-                        title="Mark as Resolved"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </button>
+            <tr 
+              key={error.id}
+              className={`hover:bg-errtrace-dark-800/50 transition-colors ${
+                expandedRows.has(error.id) ? 'bg-errtrace-dark-800/30' : ''
+              }`}
+            >
+              <td className="px-6 py-4">
+                <input
+                  type="checkbox"
+                  checked={selectedErrors.has(error.id)}
+                  onChange={() => toggleSelect(error.id)}
+                  className="rounded border-errtrace-dark-600 bg-errtrace-dark-800 text-errtrace-primary focus:ring-errtrace-primary"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${getLevelStyle(error.level)}`}>
+                  {getLevelIcon(error.level)}
+                  <span>{error.level.toUpperCase()}</span>
+                </span>
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => toggleRow(error.id)}
+                    className="text-errtrace-dark-400 hover:text-white"
+                  >
+                    {expandedRows.has(error.id) ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
                     )}
-                    <button
-                      onClick={() => onDelete(error.id)}
-                      className="p-1.5 text-errtrace-dark-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              {/* Expanded row */}
-              {expandedRows.has(error.id) && (
-                <tr key={`${error.id}-expanded`} className="bg-errtrace-dark-800/20">
-                  <td colSpan={7} className="px-6 py-4">
-                    <div className="pl-8 space-y-3">
-                      {error.stack_trace && (
-                        <div>
-                          <h4 className="text-xs font-semibold text-errtrace-dark-400 uppercase mb-1">
-                            Stack Trace
-                          </h4>
-                          <pre className="text-xs bg-errtrace-dark-900 rounded-lg p-3 overflow-x-auto font-mono text-errtrace-dark-300">
-                            {error.stack_trace}
-                          </pre>
-                        </div>
-                      )}
-                      <div className="flex items-center space-x-4 text-xs text-errtrace-dark-400">
-                        {error.user_agent && (
-                          <div className="flex items-center space-x-1">
-                            <Monitor className="h-3 w-3" />
-                            <span>{error.user_agent.substring(0, 50)}...</span>
-                          </div>
-                        )}
-                        <span>ID: {error.id}</span>
-                      </div>
+                  </button>
+                  <div>
+                    <div className="text-sm font-medium text-white">
+                      {error.message.length > 80 
+                        ? `${error.message.substring(0, 80)}...` 
+                        : error.message}
                     </div>
-                  </td>
-                </tr>
-              )}
-            </>
+                    {error.url && (
+                      <div className="flex items-center space-x-1 mt-1 text-xs text-errtrace-dark-400">
+                        <Globe className="h-3 w-3" />
+                        <span>{error.url}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {expandedRows.has(error.id) && error.stack_trace && (
+                  <div className="pl-8 mt-3">
+                    <pre className="text-xs bg-errtrace-dark-900 rounded-lg p-3 overflow-x-auto font-mono text-errtrace-dark-300">
+                      {error.stack_trace}
+                    </pre>
+                  </div>
+                )}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className="text-sm text-errtrace-dark-300">
+                  {error.environment}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center space-x-1 text-sm text-errtrace-dark-400">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{new Date(error.created_at).toLocaleString()}</span>
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  error.resolved 
+                    ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                }`}>
+                  {error.resolved ? 'Resolved' : 'Unresolved'}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => onView(error.id)}
+                    className="p-1.5 text-errtrace-dark-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                    title="View Details"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  {!error.resolved && (
+                    <button
+                      onClick={() => onResolve(error.id)}
+                      className="p-1.5 text-errtrace-dark-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all"
+                      title="Mark as Resolved"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onDelete(error.id)}
+                    className="p-1.5 text-errtrace-dark-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
           ))}
         </tbody>
       </table>

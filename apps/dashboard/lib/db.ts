@@ -36,7 +36,9 @@ async function readErrors(): Promise<ErrorLog[]> {
     try {
       const { blobs } = await list({ prefix: 'errors.json' });
       if (blobs.length > 0) {
-        const response = await fetch(blobs[0].url);
+        const response = await fetch(blobs[0].url, {
+          headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
+        });
         const text = await response.text();
         return JSON.parse(text);
       }
@@ -51,8 +53,9 @@ async function readErrors(): Promise<ErrorLog[]> {
 async function writeErrors(errors: ErrorLog[]): Promise<void> {
   if (USE_BLOB) {
     await put('errors.json', JSON.stringify(errors, null, 2), {
-      access: 'public',
+      access: 'private',
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
   } else {
     localCache = errors;
