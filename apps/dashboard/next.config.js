@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['@vercel/blob'],
-  turbopack: {},
 
   async headers() {
     return [
@@ -18,7 +17,7 @@ const nextConfig = {
     ];
   },
 
-  // Prevent Vercel from redirecting API routes
+    // Prevent Vercel from redirecting API routes
   async redirects() {
     return [];
   },
