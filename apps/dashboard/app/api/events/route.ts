@@ -42,16 +42,19 @@ export async function GET(request: NextRequest) {
 
     const result = await getEvents({ limit, name, dateRange });
 
+    // console.log(result.events[0]);
     return NextResponse.json({
-      events: result.events.map((e: any) => ({
-        id: e.id,
-        name: e.name,
-        properties: e.metadata || {},
-        timestamp: e.created_at,
-        user: e.metadata?.user,
-        tags: e.metadata?.tags,
-        environment: e.metadata?.environment,
-      })),
+      events: result.events.map((e: any) => {
+        return {
+          id: e.id,
+          name: e.name,
+          properties: e.metadata || {},
+          timestamp: e.created_at,
+          user: e.metadata.user || e.metadata?.metadata.user || e.metadata.user_identifier,
+          tags: e.metadata?.tags,
+          environment: e.metadata?.environment,
+        }
+      }),
       total: result.total,
     });
   } catch (error) {
