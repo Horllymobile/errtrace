@@ -16,8 +16,8 @@ export async function saveError(error: any) {
       metadata: typeof error.metadata === 'string'
         ? JSON.parse(error.metadata)
         : error.metadata || {},
-      user_identifier: error?.user?.id || null,   // <-- ADD
-      resolved: 0,
+      user_identifier: error.user_id || error.user_identifier || null,   // <-- FIX
+      resolved: error.resolved || 0,
       created_at: error.created_at || new Date().toISOString(),
     })
     .select('id')
@@ -26,6 +26,28 @@ export async function saveError(error: any) {
   if (dbError) throw dbError;
   return data.id;
 }
+// export async function saveError(error: any) {
+//   const { data, error: dbError } = await supabaseAdmin
+//     .from('errors')
+//     .insert({
+//       id: error.id,
+//       level: error.level || 'error',
+//       message: error.message,
+//       url: error.url,
+//       stack_trace: error.stack_trace,
+//       metadata: typeof error.metadata === 'string'
+//         ? JSON.parse(error.metadata)
+//         : error.metadata || {},
+//       user_identifier: error?.user?.id || null,   // <-- ADD
+//       resolved: 0,
+//       created_at: error.created_at || new Date().toISOString(),
+//     })
+//     .select('id')
+//     .single();
+
+//   if (dbError) throw dbError;
+//   return data.id;
+// }
 
 export async function getErrors({
   limit = 20,
@@ -198,28 +220,45 @@ export async function saveEvent(event: any) {
     .from('events')
     .insert({
       id: event.id || undefined,
-      user_id: event?.user?.id,
-      user_identifier: event?.user?.id,
-      name: event?.name,
-      url: event?.properties?.path || event?.properties?.url || null,
-      metadata: {
-        ...event?.properties,
-        user: event?.user,
-        tags: event?.tags,
-        environment: event?.environment,
-      },
+      name: event.name,
+      url: event.properties?.path || event.properties?.url || null,
+      metadata: event.properties || {},
+      user_identifier: event.user_id || event.user_identifier || null,   // <-- FIX
       created_at: event.timestamp || new Date().toISOString(),
     })
     .select('id')
     .single();
 
-  if (dbError) {
-    console.error('Error saving event:', dbError);
-    throw dbError;
-  }
-
+  if (dbError) throw dbError;
   return data.id;
 }
+// export async function saveEvent(event: any) {
+//   const { data, error: dbError } = await supabaseAdmin
+//     .from('events')
+//     .insert({
+//       id: event.id || undefined,
+//       user_id: event?.user?.id,
+//       user_identifier: event?.user?.id,
+//       name: event?.name,
+//       url: event?.properties?.path || event?.properties?.url || null,
+//       metadata: {
+//         ...event?.properties,
+//         user: event?.user,
+//         tags: event?.tags,
+//         environment: event?.environment,
+//       },
+//       created_at: event.timestamp || new Date().toISOString(),
+//     })
+//     .select('id')
+//     .single();
+
+//   if (dbError) {
+//     console.error('Error saving event:', dbError);
+//     throw dbError;
+//   }
+
+//   return data.id;
+// }
 
 export async function getEvents({
   limit = 50,

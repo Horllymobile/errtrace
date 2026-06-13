@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
       url,
       user_agent,
       metadata = {},
+      user_id,           // <-- SDK sends this
+      user_identifier,   // <-- manual calls may send this
     } = body;
 
     if (!message) {
@@ -31,6 +33,7 @@ export async function POST(request: NextRequest) {
       metadata: JSON.stringify(metadata),
       created_at: new Date().toISOString(),
       resolved: 0,
+      user_id: user_id || user_identifier || null,   // <-- use whichever is present
     } as any);
 
     return NextResponse.json({ success: true, error_id: id }, { status: 201 });
