@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveEvent, getEvents, deleteEvent } from '@/lib/db';
+import { saveEvent, getEvents } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, properties, timestamp, user, tags, environment, id } = body;
+    const { name, properties, timestamp, user, tags, environment, id, user_identifier } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'Event name required' }, { status: 400 });
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
       tags: tags || [],
       user: user || undefined,
       user_id: body.user_id || null,
+      user_identifier: body.user.id || user_identifier || null,
     });
 
     return NextResponse.json({ success: true, event_id: eventId }, { status: 201 });
