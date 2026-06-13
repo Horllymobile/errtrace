@@ -1,31 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveEvent, getEvents, deleteEvent } from '@/lib/db';
+import { saveEvent, getEvents } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, properties, timestamp, user, tags, environment, id } = body;
+    const {
+      name,
+      properties,
+      timestamp,
+      user_id,
+      user_identifier,
+      tags,
+      environment,
+    } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'Event name required' }, { status: 400 });
     }
 
-    // user_identifier: event.user.id,
-
     const eventId = await saveEvent({
-      id: id || undefined,
+      id: body.id || undefined,
       name,
-      properties: {
-        ...properties,
-        user,
-        tags,
-        environment,
-      },
+      properties: { ...properties, user: body.user, tags, environment },
       timestamp: timestamp || new Date().toISOString(),
-      environment: environment || 'production',
-      tags: tags || [],
-      user: user || undefined,
-      user_id: body.user_id || null,
+      user_id: user_id || user_identifier || null,   // <-- use whichever is present
     });
 
     return NextResponse.json({ success: true, event_id: eventId }, { status: 201 });
