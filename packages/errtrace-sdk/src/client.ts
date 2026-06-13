@@ -221,40 +221,38 @@ export class ErrTrace {
    * Setup global error handlers
    */
   private setupGlobalHandlers(): void {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') return;
 
-    // Global error handler
-    const originalOnError = window.onerror
+    const instance = this;
+
+    // Preserve existing onerror
+    const prevOnError = window.onerror;
     window.onerror = (message, source, lineno, colno, error) => {
-      if (originalOnError) {
-        originalOnError(message, source, lineno, colno, error)
+      if (prevOnError) {
+        prevOnError(message, source, lineno, colno, error);
       }
-
-      this.captureError(
+      instance.captureError(
         error || new Error(message as string),
-        {
-          metadata: { source, lineno, colno, type: 'global' }
-        }
-      )
-    }
+        { metadata: { source, lineno, colno, type: 'global' } }
+      );
+    };
 
-    // Unhandled promise rejection
-    const originalOnRejection = window.onunhandledrejection
-    window.onunhandledrejection = (event) => {
-      if (originalOnRejection) {
-        // originalOnRejection(event)
+    // Preserve existing onunhandledrejection
+    const prevOnRejection = window.onunhandledrejection;
+    window.onunhandledrejection = (event: PromiseRejectionEvent) => {
+      if (prevOnRejection) {
+        prevOnRejection.call(window, event); // <-- fixed: call with window as this
       }
-
-      this.captureError(
+      instance.captureError(
         event.reason instanceof Error
           ? event.reason
           : new Error(String(event.reason)),
         { metadata: { type: 'unhandledRejection' } }
-      )
-    }
+      );
+    };
 
     if (this.options.debug) {
-      console.log('ErrTrace: Global handlers installed')
+      console.log('ErrTrace: Global handlers installed');
     }
   }
 

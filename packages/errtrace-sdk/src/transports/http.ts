@@ -11,9 +11,6 @@ export class HTTPTransport implements Transport {
 
   async send(event: ErrorEvent): Promise<boolean> {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds
-
       const response = await fetch(this.endpoint, {
         method: 'POST',
         headers: {
@@ -27,19 +24,10 @@ export class HTTPTransport implements Transport {
           environment: event.environment,
           url: event.url,
           user_agent: event.userAgent,
-          metadata: {
-            ...event.metadata,
-            breadcrumbs: event.breadcrumbs,
-            user: event.user,
-            tags: event.tags,
-            release: event.release,
-          },
+          metadata: event.metadata,
           user_id: event.user?.id || event.user?.email || null,
         }),
-        signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
       console.error('ErrTrace: Failed to send error:', error);
