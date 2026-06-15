@@ -20,6 +20,7 @@ export class ErrTrace {
   private transport: Transport
   private tags: string[] = []
   private release: string | undefined
+  private anonymousId: string | null = null;
 
   constructor(options: ErrTraceOptions = {}) {
     this.options = {
@@ -36,6 +37,9 @@ export class ErrTrace {
       debug: options.debug || false,
     }
 
+
+
+
     this.transport = options.transport ||
       (options.dsn
         ? new HTTPTransport(options.dsn, options.apiKey)
@@ -47,6 +51,20 @@ export class ErrTrace {
     if (this.options.enabled) {
       this.setupGlobalHandlers()
     }
+
+    this.initAnonymousId();
+  }
+
+
+  private initAnonymousId() {
+    if (typeof window === 'undefined') return;
+    const STORAGE_KEY = 'errtrace_anonymous_id';
+    let id = localStorage.getItem(STORAGE_KEY);
+    if (!id) {
+      id = uuidv4();
+      localStorage.setItem(STORAGE_KEY, id);
+    }
+    this.anonymousId = id;
   }
 
   /**
