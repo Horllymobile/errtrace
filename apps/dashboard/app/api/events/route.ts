@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
           name: e.name,
           properties: e.metadata || {},
           timestamp: e.created_at,
-          user: e.metadata.user || e.metadata?.metadata.user || e.metadata.user_identifier,
+          user: e.metadata.user || e.metadata?.metadata?.user || e.metadata?.user_identifier,
           tags: e.metadata?.tags,
           environment: e.metadata?.environment,
         }

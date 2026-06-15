@@ -39,6 +39,7 @@ export interface ErrorEvent {
   breadcrumbs: Breadcrumb[]
   user?: User
   release?: string
+  user_identifier?: string | null;
 }
 
 export interface Breadcrumb {
@@ -84,6 +85,7 @@ export interface TrackEvent {
   tags?: string[];
   environment: string;
   release?: string;
+  user_identifier?: string | null;
 }
 
 export interface PageView {
